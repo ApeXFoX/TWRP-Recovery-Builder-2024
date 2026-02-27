@@ -38,16 +38,16 @@ jobs:
     - name: Clone Device Tree
       run: |
         cd workspace
-        git clone https://github.com/TeamWin/android_device_xiaomi_natrium.git -b android-10.0 ./device/xiaomi/natrium
+        # HATA DÜZELTİLDİ: -b android-10.0 parametresi imha edildi. Sistem default stabil branch'i çekecek.
+        git clone https://github.com/TeamWin/android_device_xiaomi_natrium.git ./device/xiaomi/natrium
 
     - name: Apply Kryptex Bypass Patches
       run: |
         cd workspace/device/xiaomi/natrium
         
-        # Mantıksal Çözümleme: SPL Mismatch (Downgrade) Hatasını Kırmak İçin Tarih Manipülasyonu
+        # SPL Mismatch (Downgrade) Hatasını Kırmak İçin Tarih Manipülasyonu
         sed -i 's/PLATFORM_SECURITY_PATCH := .*/PLATFORM_SECURITY_PATCH := 2099-12-31/g' BoardConfig.mk
         
-        # Eğer PLATFORM_SECURITY_PATCH değişkeni mevcut değilse, dosyanın sonuna zorla ekle
         if ! grep -q "PLATFORM_SECURITY_PATCH" BoardConfig.mk; then
           echo "PLATFORM_SECURITY_PATCH := 2099-12-31" >> BoardConfig.mk
         fi
