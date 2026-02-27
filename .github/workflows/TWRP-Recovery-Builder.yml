@@ -38,7 +38,6 @@ jobs:
     - name: Clone Device Tree
       run: |
         cd workspace
-        # HATA DÜZELTİLDİ: -b android-10.0 parametresi imha edildi. Sistem default stabil branch'i çekecek.
         git clone https://github.com/TeamWin/android_device_xiaomi_natrium.git ./device/xiaomi/natrium
 
     - name: Apply Kryptex Bypass Patches
@@ -72,7 +71,8 @@ jobs:
         cd workspace
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        lunch twrp_natrium-eng
+        # HATA DÜZELTİLDİ: "twrp_natrium" yerine "omni_natrium" kullanıldı.
+        lunch omni_natrium-eng
         make clean && make recoveryimage -j$(nproc --all)
 
     - name: Upload Recovery Artifact
