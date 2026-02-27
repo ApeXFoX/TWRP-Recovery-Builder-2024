@@ -44,11 +44,14 @@ jobs:
       run: |
         cd workspace/device/xiaomi/natrium
         
-        # 1. LEGACY INHERITANCE BYPASS (AOSP 12.1 Crash Fix)
-        # embedded.mk kalıntısını modern core_minimal.mk ile değiştir
-        sed -i 's|build/target/product/embedded.mk|build/target/product/core_minimal.mk|g' omni_natrium.mk
+        # 1. OMNI TO TWRP ARCHITECTURE CONVERSION (Nihai Legacy Bypass)
+        # Dosya adını ve içindeki tüm omni referanslarını twrp standartlarına zorla
+        mv omni_natrium.mk twrp_natrium.mk
+        sed -i 's|vendor/omni/config/common.mk|vendor/twrp/config/common.mk|g' twrp_natrium.mk
+        sed -i 's|PRODUCT_NAME := omni_natrium|PRODUCT_NAME := twrp_natrium|g' twrp_natrium.mk
+        sed -i 's|build/target/product/embedded.mk|build/target/product/core_minimal.mk|g' twrp_natrium.mk
         
-        # Gereksiz uyarı veren eski vendor scriptini imha et
+        # Hata veren eski vendor scriptini imha et
         rm -f vendorsetup.sh
 
         # 2. SPL MISMATCH (Downgrade) HATASINI KIRMAK İÇİN TARİH MANİPÜLASYONU
@@ -71,14 +74,15 @@ jobs:
           echo "TW_NO_BIND_SYSTEM := true"
         } >> BoardConfig.mk
         
-        echo "LOGICAL_ANALYSIS: Legacy dependencies destroyed. Injection complete."
+        echo "LOGICAL_ANALYSIS: Legacy Omni dependencies destroyed and rewritten to AOSP TWRP. Injection complete."
 
     - name: Building Recovery
       run: |
         cd workspace
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        lunch omni_natrium-eng
+        # HEDEF DOĞRUDAN TWRP OLARAK GÜNCELLENDİ
+        lunch twrp_natrium-eng
         make clean && make recoveryimage -j$(nproc --all)
 
     - name: Upload Recovery Artifact
@@ -93,6 +97,6 @@ jobs:
           - Target: crDroid Android 13
           - SPL Bypass: 2099-12-31
           - Decryption: FBE v2 / Metadata Enabled
-          - Base: AOSP 12.1 (Legacy Inheritance Patched)
+          - Base: AOSP 12.1 (Omni-to-TWRP Converted)
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
