@@ -44,14 +44,21 @@ jobs:
       run: |
         cd workspace/device/xiaomi/natrium
         
-        # SPL Mismatch (Downgrade) Hatasını Kırmak İçin Tarih Manipülasyonu
+        # 1. LEGACY INHERITANCE BYPASS (AOSP 12.1 Crash Fix)
+        # embedded.mk kalıntısını modern core_minimal.mk ile değiştir
+        sed -i 's|build/target/product/embedded.mk|build/target/product/core_minimal.mk|g' omni_natrium.mk
+        
+        # Gereksiz uyarı veren eski vendor scriptini imha et
+        rm -f vendorsetup.sh
+
+        # 2. SPL MISMATCH (Downgrade) HATASINI KIRMAK İÇİN TARİH MANİPÜLASYONU
         sed -i 's/PLATFORM_SECURITY_PATCH := .*/PLATFORM_SECURITY_PATCH := 2099-12-31/g' BoardConfig.mk
         
         if ! grep -q "PLATFORM_SECURITY_PATCH" BoardConfig.mk; then
           echo "PLATFORM_SECURITY_PATCH := 2099-12-31" >> BoardConfig.mk
         fi
 
-        # Android 13 FBE v2 ve Metadata Şifreleme Anahtarlarını Sisteme Enjekte Et
+        # 3. ANDROİD 13 FBE v2 VE METADATA ŞİFRELEME ANAHTARLARINI ENJEKTE ET
         {
           echo ""
           echo "# KRYPTEX ENCRYPTION BYPASS"
@@ -64,14 +71,13 @@ jobs:
           echo "TW_NO_BIND_SYSTEM := true"
         } >> BoardConfig.mk
         
-        echo "LOGICAL_ANALYSIS: Injection complete."
+        echo "LOGICAL_ANALYSIS: Legacy dependencies destroyed. Injection complete."
 
     - name: Building Recovery
       run: |
         cd workspace
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        # HATA DÜZELTİLDİ: "twrp_natrium" yerine "omni_natrium" kullanıldı.
         lunch omni_natrium-eng
         make clean && make recoveryimage -j$(nproc --all)
 
@@ -87,5 +93,6 @@ jobs:
           - Target: crDroid Android 13
           - SPL Bypass: 2099-12-31
           - Decryption: FBE v2 / Metadata Enabled
+          - Base: AOSP 12.1 (Legacy Inheritance Patched)
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
